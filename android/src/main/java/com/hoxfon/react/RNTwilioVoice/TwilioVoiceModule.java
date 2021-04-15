@@ -197,13 +197,13 @@ public class TwilioVoiceModule extends ReactContextBaseJavaModule implements Act
         return TAG;
     }
 
-//    public void onNewIntent(Intent intent) {
-//        // This is called only when the App is in the foreground
-//        if (BuildConfig.DEBUG) {
-//            Log.d(TAG, "onNewIntent " + intent.toString());
-//        }
+    public void onNewIntent(Intent intent) {
+        // This is called only when the App is in the foreground
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "onNewIntent " + intent.toString());
+        }
 //        handleIncomingCallIntent(intent);
-//    }
+    }
 
 //    private RegistrationListener registrationListener() {
 //        return new RegistrationListener() {
