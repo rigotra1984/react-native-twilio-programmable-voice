@@ -452,9 +452,9 @@ public class TwilioVoiceModule extends ReactContextBaseJavaModule implements Act
     }
 
     // removed @Override temporarily just to get it working on different versions of RN
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        // Ignored, required to implement ActivityEventListener for RN 0.33
-//    }
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Ignored, required to implement ActivityEventListener for RN 0.33
+    }
 
 //    private void handleIncomingCallIntent(Intent intent) {
 //        if (intent == null || intent.getAction() == null) {
@@ -887,8 +887,4 @@ public class TwilioVoiceModule extends ReactContextBaseJavaModule implements Act
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-    }
 }
