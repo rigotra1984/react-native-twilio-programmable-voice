@@ -126,7 +126,9 @@ public class ProximityManager {
                     }
                     WritableMap data = Arguments.createMap();
                     data.putBoolean("isNear", isNear);
-                    eventManager.sendEvent(EVENT_PROXIMITY, data);
+                    if(eventManager != null) {
+                        eventManager.sendEvent(EVENT_PROXIMITY, data);
+                    }
                 }
             }
 

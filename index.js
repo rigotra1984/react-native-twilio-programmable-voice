@@ -106,6 +106,13 @@ const Twilio = {
         }
         _eventHandlers[type].get(handler).remove()
         _eventHandlers[type].delete(handler)
+    },
+    setup(params = {}) {
+        if (Platform.OS === IOS) {
+            return
+        }
+
+        TwilioVoice.setup(params)
     }
 }
 

@@ -52,7 +52,9 @@ public class HeadsetManager {
                     data.putBoolean("isPlugged", (intent.getIntExtra("state", 0) == 1) ? true : false);
                     data.putBoolean("hasMic", (intent.getIntExtra("microphone", 0) == 1) ? true : false);
                     data.putString("deviceName", deviceName);
-                    eventManager.sendEvent(EVENT_WIRED_HEADSET, data);
+                    if(eventManager != null) {
+                        eventManager.sendEvent(EVENT_WIRED_HEADSET, data);
+                    }
                 }
             }
         };
