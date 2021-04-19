@@ -39,7 +39,7 @@ public class TwilioVoiceService extends Service {
     private static AudioManager audioManager;
     private static int originalAudioMode = AudioManager.MODE_NORMAL;
     private static ReactApplicationContext reactContext;
-    private static ProximityManager proximityManager;
+//    private static ProximityManager proximityManager;
     private static CallNotificationManager callNotificationManager;
 
     private static String toNumber = "";
@@ -97,7 +97,7 @@ public class TwilioVoiceService extends Service {
     }
 
     private void startCallService(Intent intent) {
-        TwilioVoiceService.proximityManager = new ProximityManager(getReactApplicationContext(), null);
+//        TwilioVoiceService.proximityManager = new ProximityManager(getReactApplicationContext(), null);
         TwilioVoiceService.headsetManager = new HeadsetManager(null);
         TwilioVoiceService.audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         TwilioVoiceService.callNotificationManager = new CallNotificationManager();
@@ -130,7 +130,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL FAILURE callListener().onConnectFailure call state = "+call.getState());
                 }
                 TwilioVoiceService.unsetAudioFocus();
-                TwilioVoiceService.proximityManager.stopProximitySensor();
+//                TwilioVoiceService.proximityManager.stopProximitySensor();
 
                 Bundle extras = new Bundle();
                 String callSid = "";
@@ -178,7 +178,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL CONNECTED callListener().onConnected call state = "+call.getState());
                 }
                 TwilioVoiceService.setAudioFocus();
-                TwilioVoiceService.proximityManager.startProximitySensor();
+//                TwilioVoiceService.proximityManager.startProximitySensor();
                 TwilioVoiceService.headsetManager.startWiredHeadsetEvent(getReactApplicationContext());
 
                 Bundle extras = new Bundle();
@@ -231,7 +231,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL DISCONNECTED callListener().onDisconnected call state = "+call.getState());
                 }
                 TwilioVoiceService.unsetAudioFocus();
-                TwilioVoiceService.proximityManager.stopProximitySensor();
+//                TwilioVoiceService.proximityManager.stopProximitySensor();
                 TwilioVoiceService.headsetManager.stopWiredHeadsetEvent(getReactApplicationContext());
 
                 Bundle extras = new Bundle();
