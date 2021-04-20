@@ -1,6 +1,6 @@
 {
   "name": "@islacel/react-native-twilio-programmable-voice",
-  "version": "4.4.2",
+  "version": "4.4.3",
   "description": "React Native wrapper for Twilio Programmable Voice SDK",
   "main": "index.js",
   "scripts": {
