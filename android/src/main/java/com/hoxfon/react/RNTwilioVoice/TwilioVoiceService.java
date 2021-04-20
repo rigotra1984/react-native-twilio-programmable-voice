@@ -39,13 +39,15 @@ public class TwilioVoiceService extends Service {
     private static AudioManager audioManager;
     private static int originalAudioMode = AudioManager.MODE_NORMAL;
     private static ReactApplicationContext reactContext;
-//    private static ProximityManager proximityManager;
+    private static ProximityManager proximityManager;
     private static CallNotificationManager callNotificationManager;
 
     private static String toNumber = "";
     private static String toName = "";
     private static String progressText;
     private static String progressAction;
+
+    private static Boolean inForegroundService = false;
 
     public TwilioVoiceService() {
     }
@@ -96,8 +98,38 @@ public class TwilioVoiceService extends Service {
         }
     }
 
+    private void startForegroundService(String callSid) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            // Foreground services not required before SDK 28
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Servicio not started required before SDK 28");
+            }
+            return;
+        }
+
+        String caller = TwilioVoiceService.toNumber;
+        if (TwilioVoiceService.toName != null && !TwilioVoiceService.toName.equals("")) {
+            caller = TwilioVoiceService.toName;
+        }
+
+        startForeground(FOREGROUND_SERVICE_TYPE_MICROPHONE, TwilioVoiceService.callNotificationManager.getHangupLocalNotification(getReactApplicationContext(), callSid, caller, TwilioVoiceService.progressText, TwilioVoiceService.progressAction));
+        TwilioVoiceService.inForegroundService = true;
+    }
+
+    private void startForegroundService() {
+        if(TwilioVoiceService.inForegroundService) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Servicio stoped required before SDK 28");
+            }
+            stopForeground(true);
+            TwilioVoiceService.inForegroundService = false;
+        }
+
+        stopSelf();
+    }
+
     private void startCallService(Intent intent) {
-//        TwilioVoiceService.proximityManager = new ProximityManager(getReactApplicationContext(), null);
+        TwilioVoiceService.proximityManager = new ProximityManager(getReactApplicationContext(), null);
         TwilioVoiceService.headsetManager = new HeadsetManager(null);
         TwilioVoiceService.audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         TwilioVoiceService.callNotificationManager = new CallNotificationManager();
@@ -118,7 +150,6 @@ public class TwilioVoiceService extends Service {
 
 
         TwilioVoiceService.activeCall = Voice.connect(this, connectOptions, callListener);
-
     }
 
     private Call.Listener callListener() {
@@ -130,7 +161,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL FAILURE callListener().onConnectFailure call state = "+call.getState());
                 }
                 TwilioVoiceService.unsetAudioFocus();
-//                TwilioVoiceService.proximityManager.stopProximitySensor();
+                TwilioVoiceService.proximityManager.stopProximitySensor();
 
                 Bundle extras = new Bundle();
                 String callSid = "";
@@ -150,8 +181,7 @@ public class TwilioVoiceService extends Service {
                     TwilioVoiceService.activeCall = null;
                 }
                 TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_DID_DISCONNECT, extras);
-                stopForeground(true);
-                stopSelf();
+                startForegroundService();
                 TwilioVoiceService.toNumber = "";
                 TwilioVoiceService.toName = "";
             }
@@ -178,7 +208,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL CONNECTED callListener().onConnected call state = "+call.getState());
                 }
                 TwilioVoiceService.setAudioFocus();
-//                TwilioVoiceService.proximityManager.startProximitySensor();
+                TwilioVoiceService.proximityManager.startProximitySensor();
                 TwilioVoiceService.headsetManager.startWiredHeadsetEvent(getReactApplicationContext());
 
                 Bundle extras = new Bundle();
@@ -187,12 +217,8 @@ public class TwilioVoiceService extends Service {
                     extras.putString("call_state", call.getState().name());
                     extras.putString("call_from", call.getFrom());
                     extras.putString("call_to", call.getTo());
-                    String caller = TwilioVoiceService.toNumber;
-                    if (TwilioVoiceService.toName != null && !TwilioVoiceService.toName.equals("")) {
-                        caller = TwilioVoiceService.toName;
-                    }
                     TwilioVoiceService.activeCall = call;
-                    startForeground(FOREGROUND_SERVICE_TYPE_MICROPHONE, TwilioVoiceService.callNotificationManager.getHangupLocalNotification(getReactApplicationContext(), call.getSid(), caller, TwilioVoiceService.progressText, TwilioVoiceService.progressAction));
+                    startForegroundService(call.getSid());
                 }
                 TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_DID_CONNECT, extras);
             }
@@ -231,7 +257,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL DISCONNECTED callListener().onDisconnected call state = "+call.getState());
                 }
                 TwilioVoiceService.unsetAudioFocus();
-//                TwilioVoiceService.proximityManager.stopProximitySensor();
+                TwilioVoiceService.proximityManager.stopProximitySensor();
                 TwilioVoiceService.headsetManager.stopWiredHeadsetEvent(getReactApplicationContext());
 
                 Bundle extras = new Bundle();
@@ -252,8 +278,7 @@ public class TwilioVoiceService extends Service {
                     TwilioVoiceService.activeCall = null;
                 }
                 TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_DID_DISCONNECT, extras);
-                stopForeground(true);
-                stopSelf();
+                startForegroundService();
                 TwilioVoiceService.toNumber = "";
                 TwilioVoiceService.toName = "";
             }

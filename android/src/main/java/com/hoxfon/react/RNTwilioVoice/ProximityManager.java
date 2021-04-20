@@ -34,11 +34,14 @@ public class ProximityManager {
 
     private EventManager eventManager;
 
-    public ProximityManager(ReactApplicationContext context, EventManager em) {
+    private ReactApplicationContext context;
+
+    public ProximityManager(ReactApplicationContext cnt, EventManager em) {
+        context = cnt;
         eventManager = em;
         powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+//        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+//        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         initProximityWakeLock();
     }
 
@@ -111,6 +114,15 @@ public class ProximityManager {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "initProximitySensorEventListener()");
         }
+
+//        if (sensorManager == null) {
+//            sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+//        }
+//
+//        if (proximitySensor == null) {
+//            proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+//        }
+
         proximityListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent sensorEvent) {
@@ -124,9 +136,10 @@ public class ProximityManager {
                     } else {
                         turnScreenOn();
                     }
-                    WritableMap data = Arguments.createMap();
-                    data.putBoolean("isNear", isNear);
+
                     if(eventManager != null) {
+                        WritableMap data = Arguments.createMap();
+                        data.putBoolean("isNear", isNear);
                         eventManager.sendEvent(EVENT_PROXIMITY, data);
                     }
                 }
@@ -170,6 +183,8 @@ public class ProximityManager {
                 Log.d(TAG, "unregister proximity listener");
             }
             sensorManager.unregisterListener(proximityListener);
+//            sensorManager = null;
+//            proximitySensor = null;
             proximityListener = null;
         }
     }

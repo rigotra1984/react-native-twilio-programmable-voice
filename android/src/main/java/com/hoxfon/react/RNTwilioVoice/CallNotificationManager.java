@@ -185,16 +185,16 @@ public class CallNotificationManager {
 //        TwilioVoiceModule.callNotificationMap.put(INCOMING_NOTIFICATION_PREFIX+callInvite.getCallSid(), notificationId);
 //    }
 
-//    public void initCallNotificationsChannel(NotificationManager notificationManager) {
-//        if (Build.VERSION.SDK_INT < 26) {
-//            return;
-//        }
-//        NotificationChannel channel = new NotificationChannel(VOICE_CHANNEL,
-//                "Primary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
-//        channel.setLightColor(Color.GREEN);
-//        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-//        notificationManager.createNotificationChannel(channel);
-//    }
+    public void initCallNotificationsChannel(NotificationManager notificationManager) {
+        if (Build.VERSION.SDK_INT < 26) {
+            return;
+        }
+        NotificationChannel channel = new NotificationChannel(VOICE_CHANNEL,
+                "Primary Voice Channel", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setLightColor(Color.GREEN);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        notificationManager.createNotificationChannel(channel);
+    }
 
 //    public void createMissedCallNotification(ReactApplicationContext context, CallInvite callInvite) {
 //        SharedPreferences sharedPref = context.getSharedPreferences(PREFERENCE_KEY, Context.MODE_PRIVATE);
@@ -379,6 +379,9 @@ public class CallNotificationManager {
         extras.putInt(INCOMING_CALL_NOTIFICATION_ID, HANGUP_NOTIFICATION_ID);
         extras.putString(CALL_SID_KEY, callSid);
         extras.putString(NOTIFICATION_TYPE, ACTION_HANGUP_CALL);
+
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        initCallNotificationsChannel(notificationManager);
 
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context, VOICE_CHANNEL)
                 .setContentTitle(progressText != null? progressText: "Call in progress")
