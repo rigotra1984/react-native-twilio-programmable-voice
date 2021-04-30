@@ -3,6 +3,10 @@ package com.hoxfon.react.RNTwilioVoice;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -26,7 +30,7 @@ import java.util.HashMap;
 import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
 import static com.hoxfon.react.RNTwilioVoice.Constants.*;
 
-public class TwilioVoiceService extends Service {
+public class TwilioVoiceService extends Service implements SensorEventListener {
 
     private static final String TAG = "TwilioVoiceService";
 
@@ -39,8 +43,11 @@ public class TwilioVoiceService extends Service {
     private static AudioManager audioManager;
     private static int originalAudioMode = AudioManager.MODE_NORMAL;
     private static ReactApplicationContext reactContext;
-    private static ProximityManager proximityManager;
     private static CallNotificationManager callNotificationManager;
+
+    private SensorManager sensorManager;
+    private Sensor proximitySensor;
+    private ProximityViaPowerManager proximityViaPowerManager;
 
     private static String toNumber = "";
     private static String toName = "";
@@ -116,7 +123,7 @@ public class TwilioVoiceService extends Service {
         TwilioVoiceService.inForegroundService = true;
     }
 
-    private void startForegroundService() {
+    private void stopForegroundService() {
         if(TwilioVoiceService.inForegroundService) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "Servicio stoped required before SDK 28");
@@ -129,7 +136,11 @@ public class TwilioVoiceService extends Service {
     }
 
     private void startCallService(Intent intent) {
-        TwilioVoiceService.proximityManager = new ProximityManager(getReactApplicationContext(), null);
+        proximityViaPowerManager = new ProximityViaPowerManager(getReactApplicationContext());
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        sensorManager.registerListener(this, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
+
         TwilioVoiceService.headsetManager = new HeadsetManager(null);
         TwilioVoiceService.audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         TwilioVoiceService.callNotificationManager = new CallNotificationManager();
@@ -161,8 +172,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL FAILURE callListener().onConnectFailure call state = "+call.getState());
                 }
                 TwilioVoiceService.unsetAudioFocus();
-                TwilioVoiceService.proximityManager.stopProximitySensor();
-
+                unregister();
                 Bundle extras = new Bundle();
                 String callSid = "";
                 if (call != null) {
@@ -180,8 +190,8 @@ public class TwilioVoiceService extends Service {
                 if (callSid != null && TwilioVoiceService.activeCall != null && TwilioVoiceService.activeCall.getSid() != null && TwilioVoiceService.activeCall.getSid().equals(callSid)) {
                     TwilioVoiceService.activeCall = null;
                 }
-                TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_DID_DISCONNECT, extras);
-                startForegroundService();
+                publishEvent(ACTION_CALL_CONNECTION_DID_DISCONNECT, extras);
+                stopForegroundService();
                 TwilioVoiceService.toNumber = "";
                 TwilioVoiceService.toName = "";
             }
@@ -199,7 +209,7 @@ public class TwilioVoiceService extends Service {
                     extras.putString("call_from",  call.getFrom());
                 }
 
-                TwilioVoiceService.publishEvent(ACTION_CALL_STATE_RINGING, extras);
+                publishEvent(ACTION_CALL_STATE_RINGING, extras);
             }
 
             @Override
@@ -208,7 +218,6 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL CONNECTED callListener().onConnected call state = "+call.getState());
                 }
                 TwilioVoiceService.setAudioFocus();
-                TwilioVoiceService.proximityManager.startProximitySensor();
                 TwilioVoiceService.headsetManager.startWiredHeadsetEvent(getReactApplicationContext());
 
                 Bundle extras = new Bundle();
@@ -220,7 +229,7 @@ public class TwilioVoiceService extends Service {
                     TwilioVoiceService.activeCall = call;
                     startForegroundService(call.getSid());
                 }
-                TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_DID_CONNECT, extras);
+                publishEvent(ACTION_CALL_CONNECTION_DID_CONNECT, extras);
             }
 
             @Override
@@ -234,7 +243,7 @@ public class TwilioVoiceService extends Service {
                     extras.putString("call_from", call.getFrom());
                     extras.putString("call_to", call.getTo());
                 }
-                TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_IS_RECONNECTING, extras);
+                publishEvent(ACTION_CALL_CONNECTION_IS_RECONNECTING, extras);
             }
 
             @Override
@@ -248,7 +257,7 @@ public class TwilioVoiceService extends Service {
                     extras.putString("call_from", call.getFrom());
                     extras.putString("call_to", call.getTo());
                 }
-                TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_DID_RECONNECT, extras);
+                publishEvent(ACTION_CALL_CONNECTION_DID_RECONNECT, extras);
             }
 
             @Override
@@ -257,7 +266,7 @@ public class TwilioVoiceService extends Service {
                     Log.d(TAG, "CALL DISCONNECTED callListener().onDisconnected call state = "+call.getState());
                 }
                 TwilioVoiceService.unsetAudioFocus();
-                TwilioVoiceService.proximityManager.stopProximitySensor();
+                unregister();
                 TwilioVoiceService.headsetManager.stopWiredHeadsetEvent(getReactApplicationContext());
 
                 Bundle extras = new Bundle();
@@ -277,12 +286,25 @@ public class TwilioVoiceService extends Service {
                 if (callSid != null && TwilioVoiceService.activeCall != null && TwilioVoiceService.activeCall.getSid() != null && TwilioVoiceService.activeCall.getSid().equals(callSid)) {
                     TwilioVoiceService.activeCall = null;
                 }
-                TwilioVoiceService.publishEvent(ACTION_CALL_CONNECTION_DID_DISCONNECT, extras);
-                startForegroundService();
+                publishEvent(ACTION_CALL_CONNECTION_DID_DISCONNECT, extras);
+                stopForegroundService();
                 TwilioVoiceService.toNumber = "";
                 TwilioVoiceService.toName = "";
             }
         };
+    }
+
+    private void unregister() {
+        if(sensorManager == null) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "unregister sensorManager is null");
+            }
+            return;
+        }
+
+        sensorManager.unregisterListener(this);
+        sensorManager = null;
+
     }
 
     private static void setAudioFocus() {
@@ -334,7 +356,7 @@ public class TwilioVoiceService extends Service {
         }
     }
 
-    private static void publishEvent(String action, Bundle extras) {
+    private void publishEvent(String action, Bundle extras) {
         Intent intent = new Intent(action);
 
         if(extras != null && !extras.isEmpty()) {
@@ -361,4 +383,22 @@ public class TwilioVoiceService extends Service {
         TwilioVoiceService.audioManager.setSpeakerphoneOn(value);
     }
 
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        boolean isNear = false;
+        if (sensorEvent.values[0] < proximitySensor.getMaximumRange()) {
+            isNear = true;
+        }
+
+        if(isNear) {
+            proximityViaPowerManager.turnScreenOff();
+        } else {
+            proximityViaPowerManager.turnScreenOn();
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
 }
