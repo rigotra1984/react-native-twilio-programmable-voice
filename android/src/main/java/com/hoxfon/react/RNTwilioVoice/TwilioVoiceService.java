@@ -45,9 +45,9 @@ public class TwilioVoiceService extends Service implements SensorEventListener {
     private static ReactApplicationContext reactContext;
     private static CallNotificationManager callNotificationManager;
 
-    private SensorManager sensorManager;
-    private Sensor proximitySensor;
-    private ProximityViaPowerManager proximityViaPowerManager;
+    private static SensorManager sensorManager;
+    private static Sensor proximitySensor;
+    private static ProximityViaPowerManager proximityViaPowerManager;
 
     private static String toNumber = "";
     private static String toName = "";
@@ -138,10 +138,10 @@ public class TwilioVoiceService extends Service implements SensorEventListener {
     }
 
     private void startCallService(Intent intent) {
-        proximityViaPowerManager = new ProximityViaPowerManager(getReactApplicationContext());
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        sensorManager.registerListener(this, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
+        TwilioVoiceService.proximityViaPowerManager = new ProximityViaPowerManager(getReactApplicationContext());
+        TwilioVoiceService.sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        TwilioVoiceService.proximitySensor = TwilioVoiceService.sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        TwilioVoiceService.sensorManager.registerListener(this, TwilioVoiceService.proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
 
         TwilioVoiceService.headsetManager = new HeadsetManager(null);
         TwilioVoiceService.audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
@@ -174,7 +174,7 @@ public class TwilioVoiceService extends Service implements SensorEventListener {
                     Log.d(TAG, "CALL FAILURE callListener().onConnectFailure call state = "+call.getState());
                 }
                 TwilioVoiceService.unSetAudioFocus();
-                unRegister();
+                TwilioVoiceService.unRegister();
                 Bundle extras = new Bundle();
                 String callSid = "";
                 if (call != null) {
@@ -272,7 +272,7 @@ public class TwilioVoiceService extends Service implements SensorEventListener {
                     Log.d(TAG, "CALL DISCONNECTED callListener().onDisconnected call state = "+call.getState());
                 }
                 TwilioVoiceService.unSetAudioFocus();
-                unRegister();
+                TwilioVoiceService.unRegister();
                 TwilioVoiceService.headsetManager.stopWiredHeadsetEvent(getReactApplicationContext());
 
                 Bundle extras = new Bundle();
@@ -301,16 +301,16 @@ public class TwilioVoiceService extends Service implements SensorEventListener {
         };
     }
 
-    private void unRegister() {
-        if(sensorManager == null) {
+    public static void unRegister() {
+        if(TwilioVoiceService.sensorManager == null) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "unregister sensorManager is null");
             }
             return;
         }
 
-        sensorManager.unregisterListener(this);
-        sensorManager = null;
+        TwilioVoiceService.sensorManager.unregisterListener(this);
+        TwilioVoiceService.sensorManager = null;
 
     }
 
@@ -392,19 +392,15 @@ public class TwilioVoiceService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if(TwilioVoiceService.activeCall == null) {
-            return;
-        }
-
         boolean isNear = false;
-        if (sensorEvent.values[0] < proximitySensor.getMaximumRange()) {
+        if (sensorEvent.values[0] < TwilioVoiceService.proximitySensor.getMaximumRange()) {
             isNear = true;
         }
 
         if(isNear) {
-            proximityViaPowerManager.turnScreenOff();
+            TwilioVoiceService.proximityViaPowerManager.turnScreenOff();
         } else {
-            proximityViaPowerManager.turnScreenOn();
+            TwilioVoiceService.proximityViaPowerManager.turnScreenOn();
         }
     }
 

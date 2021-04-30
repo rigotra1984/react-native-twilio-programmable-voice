@@ -194,6 +194,10 @@ public class TwilioVoiceModule extends ReactContextBaseJavaModule implements Act
          */
         getCurrentActivity().setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         registerReceiver();
+
+        if(TwilioVoiceService.getActiveCall() == null) {
+            TwilioVoiceService.unRegister();
+        }
     }
 
     @Override
