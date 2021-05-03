@@ -50,7 +50,7 @@ public class ProximityViaPowerManager {
     }
 
     @SuppressLint("LongLogTag")
-    public void turnScreenOn() {
+    public void desactivate() {
         if (proximityWakeLock == null) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, ERROR_PROXIMITY_LOCK_NOT_SUPPORTED);
@@ -65,13 +65,15 @@ public class ProximityViaPowerManager {
                 }
                 if (android.os.Build.VERSION.SDK_INT >= 21) {
                     proximityWakeLock.release(PowerManager.RELEASE_FLAG_WAIT_FOR_NO_PROXIMITY);
+                } else {
+                    proximityWakeLock.release();
                 }
             }
         }
     }
 
     @SuppressLint("LongLogTag")
-    public void turnScreenOff() {
+    public void activate() {
         if (proximityWakeLock == null) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, ERROR_PROXIMITY_LOCK_NOT_SUPPORTED);
