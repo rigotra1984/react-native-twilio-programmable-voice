@@ -55,19 +55,19 @@ const Twilio = {
         if (Platform.OS === IOS) {
             return
         }
-        // TwilioVoice.accept()
+        TwilioVoice.accept()
     },
     reject() {
         if (Platform.OS === IOS) {
             return
         }
-        // TwilioVoice.reject()
+        TwilioVoice.reject()
     },
     ignore() {
         if (Platform.OS === IOS) {
             return
         }
-        // TwilioVoice.ignore()
+        TwilioVoice.ignore()
     },
     setMuted: TwilioVoice.setMuted,
     setSpeakerPhone: TwilioVoice.setSpeakerPhone,
@@ -79,7 +79,7 @@ const Twilio = {
         }
     },
     getActiveCall: TwilioVoice.getActiveCall,
-    // getCallInvite: TwilioVoice.getCallInvite,
+    getCallInvite: TwilioVoice.getCallInvite,
     configureCallKit(params = {}) {
         if (Platform.OS === IOS) {
             TwilioVoice.configureCallKit(params)

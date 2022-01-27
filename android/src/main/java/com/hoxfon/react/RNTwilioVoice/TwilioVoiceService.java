@@ -16,10 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.twilio.voice.Call;
-import com.twilio.voice.CallException;
-import com.twilio.voice.ConnectOptions;
-import com.twilio.voice.Voice;
+import com.twilio.voice.*;
 
 import java.util.HashMap;
 
@@ -32,6 +29,7 @@ public class TwilioVoiceService extends Service {
 
     private static HashMap<String, String> params = new HashMap<>();
     private static Call activeCall;
+    private static CallInvite activeCallInvite;
     private Call.Listener callListener = callListener();
 
     private static AudioFocusRequest focusRequest;
@@ -147,11 +145,23 @@ public class TwilioVoiceService extends Service {
     }
 
     private void startCall(String accessToken) {
+
+        if(TwilioVoiceService.activeCallInvite != null) {
+            TwilioVoiceService.toNumber = TwilioVoiceService.activeCallInvite.getFrom();
+            TwilioVoiceService.toName = TwilioVoiceService.activeCallInvite.getFrom();
+
+            AcceptOptions acceptOptions = new AcceptOptions.Builder()
+                    .enableDscp(true)
+                    .build();
+            TwilioVoiceService.activeCall = TwilioVoiceService.activeCallInvite.accept(getReactApplicationContext(), acceptOptions, callListener);
+            TwilioVoiceService.activeCallInvite = null;
+            return;
+        }
+
         TwilioVoiceService.params.put("To", TwilioVoiceService.toNumber);
         ConnectOptions connectOptions = new ConnectOptions.Builder(accessToken)
                 .params(TwilioVoiceService.params)
                 .build();
-
 
         TwilioVoiceService.activeCall = Voice.connect(this, connectOptions, callListener);
     }
@@ -367,6 +377,14 @@ public class TwilioVoiceService extends Service {
     public static void setSpeakerPhone(Boolean value) {
         TwilioVoiceService.setAudioFocus();
         TwilioVoiceService.audioManager.setSpeakerphoneOn(value);
+    }
+
+    public static CallInvite getActiveCallInvite() {
+        return activeCallInvite;
+    }
+
+    public static void setActiveCallInvite(CallInvite activeCallInvite) {
+        TwilioVoiceService.activeCallInvite = activeCallInvite;
     }
 
 }

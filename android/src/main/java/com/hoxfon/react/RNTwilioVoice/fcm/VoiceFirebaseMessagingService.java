@@ -119,9 +119,9 @@ public class VoiceFirebaseMessagingService extends FirebaseMessagingService {
                                         intent.putExtra(INCOMING_CALL_NOTIFICATION_ID, notificationId);
                                         intent.putExtra(INCOMING_CALL_INVITE, callInvite);
                                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-//                                        callNotificationManager.createIncomingCallNotification(
-//                                                (ReactApplicationContext) context, callInvite, notificationId,
-//                                                launchIntent);
+                                        callNotificationManager.createIncomingCallNotification(
+                                                (ReactApplicationContext) context, callInvite, notificationId,
+                                                launchIntent);
                                     }
                                 });
                                 if (!mReactInstanceManager.hasStartedCreatingInitialContext()) {
